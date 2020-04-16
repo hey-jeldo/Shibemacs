@@ -7,7 +7,7 @@ This is my init.el in literate style in an org-file.
 Started from [[https://sanemacs.com][Sanemacs]] and build up from there.
 Learned a lot from all over the place.
 
-[[/home/jeldo/.emacs.d/screenshot.png]]
+[[./screenshot.png]]
 
 ** use-package
 And ensure that packages are always downloaded/required
@@ -266,7 +266,7 @@ Using emacs as an X11 tiling window manager
   ;; Set the title
   (setq dashboard-banner-logo-title "Welcome to shibemacs")
   ;; Set the banner
-  (setq dashboard-startup-banner "/home/jeldo/Pictures/png/shiba-rain.png")
+  (setq dashboard-startup-banner "./shibemacs-logo.png")
   ;; Value can be
   ;; 'official which displays the official emacs logo
   ;; 'logo which displays an alternative emacs logo
