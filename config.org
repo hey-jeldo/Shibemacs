@@ -1,0 +1,464 @@
+
+#+TITLE: shibemacs
+#+AUTHOR: Jeldo Arno Meppen
+
+* insert coin
+This is my init.el in literate style in an org-file.
+Started from [[https://sanemacs.com][Sanemacs]] and build up from there.
+Learned a lot from [[][Uncle Dave]]
+
+** use-package
+And ensure that packages are always downloaded/required
+#+BEGIN_SRC emacs-lisp
+   (unless (package-installed-p 'use-package)
+     (package-refresh-contents)
+     (package-install 'use-package))
+   (eval-when-compile
+     (require 'use-package))
+   (setq use-package-always-ensure t)
+ #+END_SRC
+
+** useful defaults
+#+BEGIN_SRC emacs-lisp
+  ;;; MIGRATE THIS TO RELEVANT POSITIONS
+  (setq-default cursor-type 'bar)           ; Line-style cursor similar to other text editors
+  (setq inhibit-startup-screen t)           ; Disable startup screen
+  (setq initial-scratch-message "")         ; Make *scratch* buffer blank
+  (setq-default frame-title-format '("%b")) ; Make window title the buffer name
+  (setq ring-bell-function 'ignore)         ; Disable bell sound
+  (fset 'yes-or-no-p 'y-or-n-p)             ; y-or-n-p makes answering questions faster
+  (show-paren-mode 1)                       ; Show closing parens by default
+  (setq linum-format "%4d ")                ; Prettify line number format
+  (add-hook 'prog-mode-hook                 ; Show line numbers in programming modes
+	    (if (fboundp 'display-line-numbers-mode)
+		#'display-line-numbers-mode
+	      #'linum-mode))
+  (use-package undo-tree                    ; Enable undo-tree, sane undo/redo behavior
+    :init (global-undo-tree-mode))
+#+END_SRC
+
+*** Scrolling
+#+BEGIN_SRC emacs-lisp
+  (setq scroll-conservatively 100)
+#+END_SRC
+*** Keep backups in a seperate folder
+#+BEGIN_SRC emacs-lisp
+;;; Avoid littering the user's filesystem with backups
+(setq
+   backup-by-copying t      ; don't clobber symlinks
+   backup-directory-alist
+    '((".*" . "~/.emacs.d/saves/"))    ; don't litter my fs tree
+   delete-old-versions t
+   kept-new-versions 6
+   kept-old-versions 2
+   version-control t)       ; use versioned backups
+
+;;; Lockfiles unfortunately cause more pain than benefit
+(setq create-lockfiles nil)
+#+END_SRC
+
+*** UTF-8
+#+BEGIN_SRC emacs-lisp
+  (setq locale-coding-system 'utf-8)
+  (set-terminal-coding-system 'utf-8)
+  (set-keyboard-coding-system 'utf-8)
+  (set-selection-coding-system 'utf-8)
+  (prefer-coding-system 'utf-8)
+#+END_SRC
+*** Use asynchronous processes where possible
+#+BEGIN_SRC emacs-lisp
+  (use-package async
+    :init (dired-async-mode 1))
+#+END_SRC
+** fix bugs
+*** [[https://www.reddit.com/r/emacs/comments/cueoug/the_failed_to_download_gnu_archive_is_a_pretty/][Failed to download from elpa]]
+#+BEGIN_SRC emacs-lisp
+(when (version< emacs-version "26.3")
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
+#+END_SRC
+* visuals
+** Initial Cosmetics
+Turn off the menubar, toolbar and scrollbar. 
+#+BEGIN_SRC emacs-lisp
+(if (fboundp 'menu-bar-mode)
+    (menu-bar-mode -1))
+(if (fboundp 'tool-bar-mode)
+    (tool-bar-mode -1))
+(if (fboundp 'scroll-bar-mode)
+    (scroll-bar-mode -1))
+#+END_SRC
+
+** Highlight current line
+#+BEGIN_SRC emacs-lisp
+(when window-system (add-hook 'text-mode-hook 'hl-line-mode))
+#+END_SRC
+** Pretty symbols
+#+BEGIN_SRC emacs-lisp
+  (when window-system
+	(use-package pretty-mode
+	:config
+	(global-pretty-mode t)))
+#+END_SRC
+** Themes
+*** Fallback theme
+#+BEGIN_SRC emacs-lisp
+(if (not custom-enabled-themes)
+    (load-theme 'wheatgrass t))
+#+END_SRC
+*** COMMENT Set zenburn-theme
+#+begin_src emacs-lisp
+  (use-package zenburn-theme
+    :config
+    (load-theme 'zenburn t)
+    (let ((line (face-attribute 'mode-line :underline)))
+      (set-face-attribute 'mode-line          nil :overline   line)
+      (set-face-attribute 'mode-line-inactive nil :overline   line)
+      (set-face-attribute 'mode-line-inactive nil :underline  line)
+      (set-face-attribute 'mode-line          nil :box        nil)
+      (set-face-attribute 'mode-line-inactive nil :box        nil)
+      (set-face-attribute 'mode-line-inactive nil :background "#0f0f0f")))
+#+end_src
+*** Atom One
+#+begin_src emacs-lisp
+  (use-package atom-one-dark-theme
+    :config
+    (load-theme 'atom-one-dark t))
+#+end_src
+** smartline
+#+begin_src emacs-lisp
+  (use-package smart-mode-line-atom-one-dark-theme)
+  (use-package smart-mode-line
+    :config
+    (setq sml/theme 'atom-one-dark)
+    (sml/setup))
+ #+end_src
+*** Clock
+#+BEGIN_SRC emacs-lisp
+  (setq display-time-24hr-format t)
+  (setq display-time-format "%H:%M %b %d")
+  (display-time-mode 1)
+#+END_SRC
+** darkroom
+#+begin_src emacs-lisp
+  (use-package olivetti
+    :config
+    (add-hook 'text-mode-hook 'olivetti-mode))
+#+end_src
+* window management
+** COMMENT Setup exwm
+Using emacs as an X11 tiling window manager
+  #+BEGIN_SRC emacs-lisp
+(use-package exwm
+  :config
+    (require 'exwm-config)
+    (exwm-config-default))
+  #+END_SRC
+
+** dmenu
+#+BEGIN_SRC emacs-lisp
+  (use-package dmenu
+    :bind
+    ("s-SPC" . 'dmenu))
+#+END_SRC
+** switch-window
+#+BEGIN_SRC emacs-lisp
+  (use-package switch-window
+    :ensure t
+    :config
+      (setq switch-window-input-style 'minibuffer)
+      (setq switch-window-increase 4)
+      (setq switch-window-threshold 2)
+      (setq switch-window-shortcut-style 'qwerty)
+      (setq switch-window-qwerty-shortcuts
+	  '("a" "s" "d" "f" "j" "k" "l"))
+    :bind
+      ([remap other-window] . switch-window))
+#+END_SRC
+** Split window and follow focus
+#+BEGIN_SRC emacs-lisp
+  (defun split-and-follow-horizontally ()
+    (interactive)
+    (split-window-below)
+    (balance-windows)
+    (other-window 1))
+  (global-set-key (kbd "s-h") 'split-and-follow-horizontally)
+
+  (defun split-and-follow-vertically ()
+    (interactive)
+    (split-window-right)
+    (balance-windows)
+    (other-window 1))
+  (global-set-key (kbd "s-v") 'split-and-follow-vertically)
+#+END_SRC
+** ibuffer
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+(global-set-key (kbd "s-b") 'ibuffer)
+#+end_src
+* useful packages
+** COMMENT evil
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :config
+
+    (evil-mode 1)
+    (use-package evil-leader
+      :ensure t
+      :config
+      (global-evil-leader-mode t)
+      (evil-leader/set-leader "<SPC>")
+      (evil-leader/set-key
+        "s s" 'swiper
+        "d x w" 'delete-trailing-whitespace
+        "f f" 'find-file
+        "s t b" 'switch-to-buffer
+        "j" 'switch-window
+        "e s" 'org-edit-src-code
+        "t h" 'org-toggle-heading
+        "s b" 'save-buffer
+        "e e" 'exit-emacs
+        "e c" 'counsel-M-x
+        "c w" 'delete-window
+        ))
+
+    (use-package evil-surround
+      :ensure t
+      :config (global-evil-surround-mode))
+
+    (use-package evil-indent-textobject
+      :ensure t)
+
+    (use-package evil-org
+      :ensure t
+      :config
+      (evil-org-set-key-theme
+       '(textobjects insert navigation additional shift todo heading))
+      (add-hook 'org-mode-hook (lambda () (evil-org-mode)))))
+#+end_src
+** COMMENT centaur tabs
+#+begin_src emacs-lisp
+  (use-package centaur-tabs
+    :demand
+    :config
+    (centaur-tabs-mode t)
+    :bind
+    ("s-q" . centaur-tabs-backward)
+    ("s-e" . centaur-tabs-forward))
+#+end_src
+** ergoemacs-mode
+#+begin_src emacs-lisp
+  (use-package ergoemacs-mode
+    :config
+    (setq ergoemacs-theme "lvl1") ;; Uses Standard Ergoemacs keyboard theme
+    (setq ergoemacs-keyboard-layout "us") ;; Assumes QWERTY keyboard layout
+    (ergoemacs-mode 1))
+#+end_src
+** company-mode
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :init
+  (add-hook 'after-init-hook 'global-company-mode))
+#+END_SRC
+** ivy
+#+BEGIN_SRC emacs-lisp
+(use-package ivy
+  :config
+  (ivy-mode 1)
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-count-format "(%d/%d) ")
+  (setq enable-recursive-minibuffers t)
+  (setq ivy-initial-inputs-alist nil)
+  (setq ivy-re-builders-alist
+	'((swiper . ivy--regex-plus)
+	  (swiper-isearch . regexp-quote)
+	  (counsel-rg . ivy--regex-plus)
+	  (t      . ivy--regex-fuzzy)))
+
+  (global-set-key (kbd "C-x b") 'ivy-switch-buffer))
+
+(use-package swiper
+  :config
+  (global-set-key (kbd "C-s") 'swiper-isearch))
+
+(use-package counsel
+  :config
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "M-y") 'counsel-yank-pop))
+#+END_SRC
+**** COMMENT ivy-posframe
+#+begin_src emacs-lisp
+  (use-package ivy-posframe
+    :config
+    ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display)))
+    (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-center)))
+    ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-window-center)))
+    ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-bottom-left)))
+    ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-window-bottom-left)))
+    ;; (setq ivy-posframe-display-functions-alist '((t . ivy-posframe-display-at-frame-top-center)))
+    (setq ivy-posframe-parameters
+          '((left-fringe . 8)
+            (right-fringe . 8)))
+    (ivy-posframe-mode 1))
+#+end_src
+** ledger-mode
+#+BEGIN_SRC emacs-lisp
+(use-package ledger-mode
+  :config
+  (autoload 'ledger-mode "ledger-mode" "A major mode for Ledger" t)
+  (add-to-list 'load-path
+	       (expand-file-name "/path/to/ledger/source/lisp/"))
+  (add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode)))
+#+END_SRC
+** which-key
+#+BEGIN_SRC emacs-lisp
+(use-package which-key
+  :config
+  (which-key-mode)
+  (setq which-key-idle-delay 0.5))
+#+END_SRC
+** magit
+#+begin_src emacs-lisp
+  (use-package magit)
+#+end_src
+** neotree
+#+begin_src emacs-lisp
+  (use-package neotree
+    :config
+    (global-set-key [f8] 'neotree-toggle))
+  (setq neo-theme (if (display-graphic-p) 'ascii 'ascii))
+#+end_src
+** dashboard
+*** dependencies
+**** page-break-lines
+#+begin_src emacs-lisp
+  (use-package page-break-lines)
+#+end_src
+*** install
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook))
+#+end_src
+*** configure
+#+begin_src emacs-lisp
+  ;; Set the title
+  (setq dashboard-banner-logo-title "Welcome to shibemacs")
+  ;; Set the banner
+  (setq dashboard-startup-banner "/home/jeldo/Pictures/png/shiba3.png")
+  ;; Value can be
+  ;; 'official which displays the official emacs logo
+  ;; 'logo which displays an alternative emacs logo
+  ;; 1, 2 or 3 which displays one of the text banners
+  ;; "path/to/your/image.png" which displays whatever image you would prefer
+
+  ;; Content is not centered by default. To center, set
+  (setq dashboard-center-content t)
+
+  ;; To disable shortcut "jump" indicators for each section, set
+  ;; (setq dashboard-show-shortcuts nil)
+#+end_src
+** hydra
+#+begin_src emacs-lisp
+  (use-package hydra)
+  (defhydra hydra-zoom (global-map "<f2>")
+    "zoom"
+    ("g" text-scale-increase "in")
+    ("l" text-scale-decrease "out"))
+#+end_src
+* org
+** Install Org
+and require =org-tempo= to keep =SRC= block expanding with =TAB=
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :ensure org-plus-contrib
+    :config
+    (require 'org-tempo))
+#+END_SRC
+
+** Quickly insert a block of emacs-lisp
+relies on =org-tempo= as of =Org v9.2=
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-structure-template-alist
+	       '("el" . "src emacs-lisp"))
+#+END_SRC
+
+** Quickly visit the config file
+#+BEGIN_SRC emacs-lisp
+  (defun config-visit ()
+    (interactive)
+    (find-file "~/.emacs.d/config.org"))
+  (global-set-key (kbd "C-c e") 'config-visit)
+#+END_SRC
+
+** Reload the config
+#+BEGIN_SRC emacs-lisp
+  (defun config-reload ()
+    (interactive)
+    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
+  (global-set-key (kbd "C-c r") 'config-reload)
+#+END_SRC
+
+** Use org-indent
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook 'org-indent-mode)
+#+end_src
+
+** Set org-ellipsis style
+#+begin_src emacs-lisp
+  (setq org-ellipsis " +")
+#+end_src
+
+** Latex snippet previews
+*** Toggle preview under cursor
+#+begin_src emacs-lisp
+  (use-package org-fragtog
+    :config
+    (add-hook 'org-mode-hook 'org-fragtog-mode))
+#+end_src
+*** Make the preview bigger
+#+begin_src emacs-lisp
+  (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.4))
+#+end_src
+
+** Always use pretty entities
+#+begin_src emacs-lisp
+  (setq org-pretty-entities t)
+#+end_src
+
+** Keybindings
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c h") 'org-toggle-heading)
+#+end_src
+
+** org-flashcards
+#+begin_src emacs-lisp
+  (use-package org-fc
+    :load-path "~/src/org-fc"
+    :custom
+    (org-fc-directories '("~/org"))
+    :config
+    (require 'org-fc-hydra)
+    (global-set-key (kbd "C-c f") 'org-fc-hydra/body))
+#+end_src
+* terminal
+** Default shell
+#+BEGIN_SRC emacs-lisp
+  (defvar my-term-shell "/usr/bin/zsh")
+  (defadvice ansi-term (before force-bash)
+    (interactive (list my-term-shell)))
+  (ad-activate 'ansi-term)
+#+END_SRC
+** Launch terminal
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "<s-return>") 'ansi-term)
+  (global-set-key (kbd "<s-S-return>") 'eshell)
+#+END_SRC
+* COMMENT pdf-tools
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools
+  :init
+  (load "pdf-tools-init.el"))
+#+END_SRC
