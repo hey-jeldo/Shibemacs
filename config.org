@@ -5,7 +5,9 @@
 * insert coin
 This is my init.el in literate style in an org-file.
 Started from [[https://sanemacs.com][Sanemacs]] and build up from there.
-Learned a lot from [[][Uncle Dave]]
+Learned a lot from all over the place.
+
+[[/home/jeldo/.emacs.d/screenshot.png]]
 
 ** use-package
 And ensure that packages are always downloaded/required
@@ -246,6 +248,37 @@ Using emacs as an X11 tiling window manager
     ("s-q" . centaur-tabs-backward)
     ("s-e" . centaur-tabs-forward))
 #+end_src
+** dashboard
+*** dependencies
+**** page-break-lines
+#+begin_src emacs-lisp
+  (use-package page-break-lines)
+#+end_src
+*** install
+#+begin_src emacs-lisp
+  (use-package dashboard
+    :ensure t
+    :config
+    (dashboard-setup-startup-hook))
+#+end_src
+*** configure
+#+begin_src emacs-lisp
+  ;; Set the title
+  (setq dashboard-banner-logo-title "Welcome to shibemacs")
+  ;; Set the banner
+  (setq dashboard-startup-banner "/home/jeldo/Pictures/png/shiba-rain.png")
+  ;; Value can be
+  ;; 'official which displays the official emacs logo
+  ;; 'logo which displays an alternative emacs logo
+  ;; 1, 2 or 3 which displays one of the text banners
+  ;; "path/to/your/image.png" which displays whatever image you would prefer
+
+  ;; Content is not centered by default. To center, set
+  (setq dashboard-center-content t)
+
+  ;; To disable shortcut "jump" indicators for each section, set
+  ;; (setq dashboard-show-shortcuts nil)
+#+end_src
 ** ergoemacs-mode
 #+begin_src emacs-lisp
   (use-package ergoemacs-mode
@@ -328,37 +361,6 @@ Using emacs as an X11 tiling window manager
     :config
     (global-set-key [f8] 'neotree-toggle))
   (setq neo-theme (if (display-graphic-p) 'ascii 'ascii))
-#+end_src
-** dashboard
-*** dependencies
-**** page-break-lines
-#+begin_src emacs-lisp
-  (use-package page-break-lines)
-#+end_src
-*** install
-#+begin_src emacs-lisp
-  (use-package dashboard
-    :ensure t
-    :config
-    (dashboard-setup-startup-hook))
-#+end_src
-*** configure
-#+begin_src emacs-lisp
-  ;; Set the title
-  (setq dashboard-banner-logo-title "Welcome to shibemacs")
-  ;; Set the banner
-  (setq dashboard-startup-banner "/home/jeldo/Pictures/png/shiba3.png")
-  ;; Value can be
-  ;; 'official which displays the official emacs logo
-  ;; 'logo which displays an alternative emacs logo
-  ;; 1, 2 or 3 which displays one of the text banners
-  ;; "path/to/your/image.png" which displays whatever image you would prefer
-
-  ;; Content is not centered by default. To center, set
-  (setq dashboard-center-content t)
-
-  ;; To disable shortcut "jump" indicators for each section, set
-  ;; (setq dashboard-show-shortcuts nil)
 #+end_src
 ** hydra
 #+begin_src emacs-lisp
