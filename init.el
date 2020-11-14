@@ -16,4 +16,4 @@
 
 ;;; Load config.org
 ;;; All of my configuration will happen there, so don't you touch this file!
-(org-babel-load-file (expand-file-name "~/.emacs.d/config.org"))
+(org-babel-load-file (expand-file-name "~/.emacs.d/readme.org"))
