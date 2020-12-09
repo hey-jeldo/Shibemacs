@@ -156,13 +156,13 @@ Using emacs as an X11 tiling window manager
     (exwm-config-default))
   #+END_SRC
 
-** dmenu
+** COMMENT dmenu
 #+BEGIN_SRC emacs-lisp
   (use-package dmenu
     :bind
     ("s-SPC" . 'dmenu))
 #+END_SRC
-** switch-window
+** COMMENT switch-window
 #+BEGIN_SRC emacs-lisp
   (use-package switch-window
     :ensure t
@@ -176,7 +176,7 @@ Using emacs as an X11 tiling window manager
     :bind
       ([remap other-window] . switch-window))
 #+END_SRC
-** Split window and follow focus
+** COMMENT Split window and follow focus
 #+BEGIN_SRC emacs-lisp
   (defun split-and-follow-horizontally ()
     (interactive)
@@ -192,7 +192,7 @@ Using emacs as an X11 tiling window manager
     (other-window 1))
   (global-set-key (kbd "s-v") 'split-and-follow-vertically)
 #+END_SRC
-** ibuffer
+** COMMENT ibuffer
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "s-b") 'ibuffer)
@@ -248,7 +248,7 @@ Using emacs as an X11 tiling window manager
     ("s-q" . centaur-tabs-backward)
     ("s-e" . centaur-tabs-forward))
 #+end_src
-** dashboard
+** COMMENT dashboard
 *** dependencies
 **** page-break-lines
 #+begin_src emacs-lisp
@@ -279,7 +279,7 @@ Using emacs as an X11 tiling window manager
   ;; To disable shortcut "jump" indicators for each section, set
   ;; (setq dashboard-show-shortcuts nil)
 #+end_src
-** ergoemacs-mode
+** COMMENT ergoemacs-mode
 #+begin_src emacs-lisp
   (use-package ergoemacs-mode
     :config
@@ -287,13 +287,13 @@ Using emacs as an X11 tiling window manager
     (setq ergoemacs-keyboard-layout "us") ;; Assumes QWERTY keyboard layout
     (ergoemacs-mode 1))
 #+end_src
-** company-mode
+** COMMENT company-mode
 #+BEGIN_SRC emacs-lisp
 (use-package company
   :init
   (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
-** ivy
+** COMMENT ivy
 #+BEGIN_SRC emacs-lisp
 (use-package ivy
   :config
@@ -335,7 +335,7 @@ Using emacs as an X11 tiling window manager
             (right-fringe . 8)))
     (ivy-posframe-mode 1))
 #+end_src
-** ledger-mode
+** COMMENT ledger-mode
 #+BEGIN_SRC emacs-lisp
 (use-package ledger-mode
   :config
@@ -344,25 +344,25 @@ Using emacs as an X11 tiling window manager
 	       (expand-file-name "/path/to/ledger/source/lisp/"))
   (add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode)))
 #+END_SRC
-** which-key
+** COMMENT which-key
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
   :config
   (which-key-mode)
   (setq which-key-idle-delay 0.5))
 #+END_SRC
-** magit
+** COMMENT magit
 #+begin_src emacs-lisp
   (use-package magit)
 #+end_src
-** neotree
+** COMMENT neotree
 #+begin_src emacs-lisp
   (use-package neotree
     :config
     (global-set-key [f8] 'neotree-toggle))
   (setq neo-theme (if (display-graphic-p) 'ascii 'ascii))
 #+end_src
-** hydra
+** COMMENT hydra
 #+begin_src emacs-lisp
   (use-package hydra)
   (defhydra hydra-zoom (global-map "<f2>")
@@ -370,6 +370,12 @@ Using emacs as an X11 tiling window manager
     ("g" text-scale-increase "in")
     ("l" text-scale-decrease "out"))
 #+end_src
+** COMMENT pdf-tools
+ #+BEGIN_SRC emacs-lisp
+ (use-package pdf-tools
+   :init
+   (load "pdf-tools-init.el"))
+ #+END_SRC
 * org
 ** Install Org
 and require =org-tempo= to keep =SRC= block expanding with =TAB=
@@ -435,7 +441,7 @@ relies on =org-tempo= as of =Org v9.2=
   (global-set-key (kbd "C-c h") 'org-toggle-heading)
 #+end_src
 
-** org-flashcards
+** COMMENT org-flashcards
 #+begin_src emacs-lisp
   (use-package org-fc
     :load-path "~/src/org-fc"
@@ -448,7 +454,7 @@ relies on =org-tempo= as of =Org v9.2=
 * terminal
 ** Default shell
 #+BEGIN_SRC emacs-lisp
-  (defvar my-term-shell "/usr/bin/zsh")
+  (defvar my-term-shell "/usr/zsh")
   (defadvice ansi-term (before force-bash)
     (interactive (list my-term-shell)))
   (ad-activate 'ansi-term)
@@ -457,10 +463,4 @@ relies on =org-tempo= as of =Org v9.2=
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "<s-return>") 'ansi-term)
   (global-set-key (kbd "<s-S-return>") 'eshell)
-#+END_SRC
-* COMMENT pdf-tools
-#+BEGIN_SRC emacs-lisp
-(use-package pdf-tools
-  :init
-  (load "pdf-tools-init.el"))
 #+END_SRC
