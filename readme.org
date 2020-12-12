@@ -1,5 +1,5 @@
 
-#+TITLE: shibemacs
+#+TITLE: shibEmacs
 #+AUTHOR: Jeldo Arno Meppen
 
 * insert coin
@@ -19,7 +19,7 @@ And ensure that packages are always downloaded/required
      (require 'use-package))
    (setq use-package-always-ensure t)
  #+END_SRC
-
+ 
 ** useful defaults
 #+BEGIN_SRC emacs-lisp
   ;;; MIGRATE THIS TO RELEVANT POSITIONS
@@ -32,9 +32,9 @@ And ensure that packages are always downloaded/required
   (show-paren-mode 1)                       ; Show closing parens by default
   (setq linum-format "%4d ")                ; Prettify line number format
   (add-hook 'prog-mode-hook                 ; Show line numbers in programming modes
-	    (if (fboundp 'display-line-numbers-mode)
-		#'display-line-numbers-mode
-	      #'linum-mode))
+            (if (fboundp 'display-line-numbers-mode)
+                #'display-line-numbers-mode
+              #'linum-mode))
   (use-package undo-tree                    ; Enable undo-tree, sane undo/redo behavior
     :init (global-undo-tree-mode))
 #+END_SRC
@@ -78,12 +78,25 @@ And ensure that packages are always downloaded/required
 (when (version< emacs-version "26.3")
   (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3"))
 #+END_SRC
+*** brackets and braces on macOS with non-mac-keyboard
+#+begin_src emacs-lisp
+  (setq mac-option-key-is-meta t)
+  (setq mac-right-option-modifier nil)
+#+end_src
+*** Use Python 3
+#+begin_src emacs-lisp
+  (setq python-shell-interpreter "python3")
+#+end_src
+*** [[https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline][‘python-shell-interpreter’ doesn’t seem to support readline]]
+#+begin_src emacs-lisp
+  (setq python-shell-completion-native-enable nil) 
+#+end_src
 * visuals
 ** Initial Cosmetics
 Turn off the menubar, toolbar and scrollbar. 
 #+BEGIN_SRC emacs-lisp
-(if (fboundp 'menu-bar-mode)
-    (menu-bar-mode -1))
+;(if (fboundp 'menu-bar-mode)
+    ;(menu-bar-mode -1))
 (if (fboundp 'tool-bar-mode)
     (tool-bar-mode -1))
 (if (fboundp 'scroll-bar-mode)
@@ -94,7 +107,7 @@ Turn off the menubar, toolbar and scrollbar.
 #+BEGIN_SRC emacs-lisp
 (when window-system (add-hook 'text-mode-hook 'hl-line-mode))
 #+END_SRC
-** Pretty symbols
+** COMMENT Pretty symbols
 #+BEGIN_SRC emacs-lisp
   (when window-system
 	(use-package pretty-mode
@@ -126,13 +139,19 @@ Turn off the menubar, toolbar and scrollbar.
     :config
     (load-theme 'atom-one-dark t))
 #+end_src
+*** COMMENT Solarized Light
+#+begin_src emacs-lisp
+  (use-package solarized-theme
+    :config
+    (load-theme 'solarized-light t))
+#+end_src
 ** smartline
 #+begin_src emacs-lisp
-  (use-package smart-mode-line-atom-one-dark-theme)
-  (use-package smart-mode-line
-    :config
-    (setq sml/theme 'atom-one-dark)
-    (sml/setup))
+    (use-package smart-mode-line-atom-one-dark-theme)
+    (use-package smart-mode-line
+      :config
+      (setq sml/theme 'atom-one-dark)
+      (sml/setup))
  #+end_src
 *** Clock
 #+BEGIN_SRC emacs-lisp
@@ -146,6 +165,28 @@ Turn off the menubar, toolbar and scrollbar.
     :config
     (add-hook 'text-mode-hook 'olivetti-mode))
 #+end_src
+** Start with a bigger window
+#+begin_src emacs-lisp
+  (defun set-frame-size-according-to-resolution ()
+    (interactive)
+    (if window-system
+    (progn
+      ;; use 120 char wide window for largeish displays
+      ;; and smaller 80 column windows for smaller displays
+      ;; pick whatever numbers make sense for you
+      (if (> (x-display-pixel-width) 1280)
+             (add-to-list 'default-frame-alist (cons 'width 120))
+             (add-to-list 'default-frame-alist (cons 'width 80)))
+      ;; for the height, subtract a couple hundred pixels
+      ;; from the screen height (for panels, menubars and
+      ;; whatnot), then divide by the height of a char to
+      ;; get the height we want
+      (add-to-list 'default-frame-alist 
+           (cons 'height (/ (- (x-display-pixel-height) 200)
+                               (frame-char-height)))))))
+
+  (set-frame-size-according-to-resolution)
+#+end_src
 * window management
 ** COMMENT Setup exwm
 Using emacs as an X11 tiling window manager
@@ -156,13 +197,13 @@ Using emacs as an X11 tiling window manager
     (exwm-config-default))
   #+END_SRC
 
-** COMMENT dmenu
+** dmenu
 #+BEGIN_SRC emacs-lisp
   (use-package dmenu
     :bind
     ("s-SPC" . 'dmenu))
 #+END_SRC
-** COMMENT switch-window
+** switch-window
 #+BEGIN_SRC emacs-lisp
   (use-package switch-window
     :ensure t
@@ -176,7 +217,7 @@ Using emacs as an X11 tiling window manager
     :bind
       ([remap other-window] . switch-window))
 #+END_SRC
-** COMMENT Split window and follow focus
+** Split window and follow focus
 #+BEGIN_SRC emacs-lisp
   (defun split-and-follow-horizontally ()
     (interactive)
@@ -192,7 +233,7 @@ Using emacs as an X11 tiling window manager
     (other-window 1))
   (global-set-key (kbd "s-v") 'split-and-follow-vertically)
 #+END_SRC
-** COMMENT ibuffer
+** ibuffer
 #+begin_src emacs-lisp
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (global-set-key (kbd "s-b") 'ibuffer)
@@ -238,17 +279,20 @@ Using emacs as an X11 tiling window manager
        '(textobjects insert navigation additional shift todo heading))
       (add-hook 'org-mode-hook (lambda () (evil-org-mode)))))
 #+end_src
-** COMMENT centaur tabs
+** [[https://github.com/ema2159/centaur-tabs][centaur tabs]]
 #+begin_src emacs-lisp
   (use-package centaur-tabs
     :demand
     :config
     (centaur-tabs-mode t)
+    (centaur-tabs-headline-match)
+    (setq centaur-tabs-height 32)
+    (centaur-tabs-change-fonts "Fantasque Sans Mono" 160)
     :bind
     ("s-q" . centaur-tabs-backward)
     ("s-e" . centaur-tabs-forward))
 #+end_src
-** COMMENT dashboard
+** dashboard
 *** dependencies
 **** page-break-lines
 #+begin_src emacs-lisp
@@ -264,9 +308,9 @@ Using emacs as an X11 tiling window manager
 *** configure
 #+begin_src emacs-lisp
   ;; Set the title
-  (setq dashboard-banner-logo-title "Welcome to shibemacs")
+  (setq dashboard-banner-logo-title "shibEmacs")
   ;; Set the banner
-  (setq dashboard-startup-banner "./shibemacs-logo.png")
+  (setq dashboard-startup-banner "/Users/jeldo/.emacs.d/shino.png")
   ;; Value can be
   ;; 'official which displays the official emacs logo
   ;; 'logo which displays an alternative emacs logo
@@ -287,13 +331,13 @@ Using emacs as an X11 tiling window manager
     (setq ergoemacs-keyboard-layout "us") ;; Assumes QWERTY keyboard layout
     (ergoemacs-mode 1))
 #+end_src
-** COMMENT company-mode
+** company-mode
 #+BEGIN_SRC emacs-lisp
 (use-package company
   :init
   (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
-** COMMENT ivy
+** [[https://github.com/abo-abo/swiper][ivy]]
 #+BEGIN_SRC emacs-lisp
 (use-package ivy
   :config
@@ -320,7 +364,7 @@ Using emacs as an X11 tiling window manager
   (global-set-key (kbd "C-x C-f") 'counsel-find-file)
   (global-set-key (kbd "M-y") 'counsel-yank-pop))
 #+END_SRC
-**** COMMENT ivy-posframe
+*** COMMENT [[https://github.com/tumashu/ivy-posframe][ivy-posframe]]
 #+begin_src emacs-lisp
   (use-package ivy-posframe
     :config
@@ -344,7 +388,7 @@ Using emacs as an X11 tiling window manager
 	       (expand-file-name "/path/to/ledger/source/lisp/"))
   (add-to-list 'auto-mode-alist '("\\.ledger$" . ledger-mode)))
 #+END_SRC
-** COMMENT which-key
+** which-key
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
   :config
@@ -355,11 +399,11 @@ Using emacs as an X11 tiling window manager
 #+begin_src emacs-lisp
   (use-package magit)
 #+end_src
-** COMMENT neotree
+** neotree
 #+begin_src emacs-lisp
   (use-package neotree
     :config
-    (global-set-key [f8] 'neotree-toggle))
+    (global-set-key (kbd "s-#") 'neotree-toggle))
   (setq neo-theme (if (display-graphic-p) 'ascii 'ascii))
 #+end_src
 ** COMMENT hydra
@@ -376,6 +420,23 @@ Using emacs as an X11 tiling window manager
    :init
    (load "pdf-tools-init.el"))
  #+END_SRC
+** [[https://github.com/jorgenschaefer/elpy][elpy]]
+#+begin_src emacs-lisp
+  (use-package elpy
+    :ensure t
+    :init
+    (elpy-enable))
+#+end_src
+** COMMENT [[https://github.com/necaris/conda.el][conda.el]]
+#+begin_src emacs-lisp
+  (require 'conda)
+  ;; if you want interactive shell support, include:
+  (conda-env-initialize-interactive-shells)
+  ;; if you want eshell support, include:
+  (conda-env-initialize-eshell)
+  ;; if you want auto-activation (see below for details), include:
+  (conda-env-autoactivate-mode t)
+#+end_src
 * org
 ** Install Org
 and require =org-tempo= to keep =SRC= block expanding with =TAB=
@@ -392,12 +453,11 @@ relies on =org-tempo= as of =Org v9.2=
   (add-to-list 'org-structure-template-alist
 	       '("el" . "src emacs-lisp"))
 #+END_SRC
-
 ** Quickly visit the config file
 #+BEGIN_SRC emacs-lisp
   (defun config-visit ()
     (interactive)
-    (find-file "~/.emacs.d/config.org"))
+    (find-file "~/.emacs.d/readme.org"))
   (global-set-key (kbd "C-c e") 'config-visit)
 #+END_SRC
 
@@ -405,7 +465,7 @@ relies on =org-tempo= as of =Org v9.2=
 #+BEGIN_SRC emacs-lisp
   (defun config-reload ()
     (interactive)
-    (org-babel-load-file (expand-file-name "~/.emacs.d/config.org")))
+    (org-babel-load-file (expand-file-name "~/.emacs.d/readme.org")))
   (global-set-key (kbd "C-c r") 'config-reload)
 #+END_SRC
 
@@ -450,6 +510,12 @@ relies on =org-tempo= as of =Org v9.2=
     :config
     (require 'org-fc-hydra)
     (global-set-key (kbd "C-c f") 'org-fc-hydra/body))
+#+end_src
+** Org Babel Python
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)))
 #+end_src
 * terminal
 ** Default shell
