@@ -1,6 +1,8 @@
 
-#+TITLE: shibEmacs
+#+TITLE: dogemacs
 #+AUTHOR: Jeldo Arno Meppen
+#+latex_header: \hypersetup{hidelinks}
+Time-stamp: <2020-12-13 22:33:51 jeldo>
 
 * insert coin
 This is my init.el in literate style in an org-file.
@@ -37,7 +39,8 @@ And ensure that packages are always downloaded/required
               #'linum-mode))
   (use-package undo-tree                    ; Enable undo-tree, sane undo/redo behavior
     :init (global-undo-tree-mode))
-#+END_SRC
+(add-hook 'before-save-hook 'time-stamp)
+ #+END_SRC
 
 *** Scrolling
 #+BEGIN_SRC emacs-lisp
@@ -90,6 +93,46 @@ And ensure that packages are always downloaded/required
 *** [[https://emacs.stackexchange.com/questions/30082/your-python-shell-interpreter-doesn-t-seem-to-support-readline][‘python-shell-interpreter’ doesn’t seem to support readline]]
 #+begin_src emacs-lisp
   (setq python-shell-completion-native-enable nil) 
+#+end_src
+*** cant find module python org mode
+#+begin_src emacs-lisp
+  (defun python-reinstate-current-directory ()
+    "When running Python, add the current directory ('') to the head of sys.path.
+  For reasons unexplained, run-python passes arguments to the
+  interpreter that explicitly remove '' from sys.path. This means
+  that, for example, using `python-send-buffer' in a buffer
+  visiting a module's code will fail to find other modules in the
+  same directory.
+
+  Adding this function to `inferior-python-mode-hook' reinstates
+  the current directory in Python's search path."
+    (python-send-string "sys.path[0:0] = ['']"))
+
+  (add-hook 'inferior-python-mode-hook 'python-reinstate-current-directory)
+#+end_src
+*** pdflatex not found
+#+begin_src emacs-lisp
+  ;;(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/pdflatex"))
+  ;;(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/latex"))
+  ;;(setenv "PATH" (concat (getenv "PATH") ":/usr/local/bin/tex"))
+
+  (defun set-exec-path-from-shell-PATH ()
+    (let ((path-from-shell 
+        (replace-regexp-in-string "[[:space:]\n]*$" "" 
+          (shell-command-to-string "$SHELL -l -c 'echo $PATH'"))))
+      (setenv "PATH" path-from-shell)
+      (setq exec-path (split-string path-from-shell path-separator))))
+  (when (equal system-type 'darwin) (set-exec-path-from-shell-PATH))
+#+end_src
+*** TODO COMMENT [[https://github.com/purcell/exec-path-from-shell][exec path from shell]]
+#+begin_src emacs-lisp
+  (when (memq window-system '(mac ns x))
+    (exec-path-from-shell-initialize))
+
+
+  ;;(setenv "PYTHONPATH" (shell-command-to-string "$SHELL --login -c 'echo -n $PYTHONPATH'"))
+
+  (exec-path-from-shell-copy-env "PYTHONPATH")
 #+end_src
 * visuals
 ** Initial Cosmetics
@@ -144,6 +187,10 @@ Turn off the menubar, toolbar and scrollbar.
   (use-package solarized-theme
     :config
     (load-theme 'solarized-light t))
+#+end_src
+** Font
+#+begin_src emacs-lisp
+  (set-frame-font "Fantasque Sans Mono 16" nil t)
 #+end_src
 ** smartline
 #+begin_src emacs-lisp
@@ -308,7 +355,7 @@ Using emacs as an X11 tiling window manager
 *** configure
 #+begin_src emacs-lisp
   ;; Set the title
-  (setq dashboard-banner-logo-title "shibEmacs")
+  (setq dashboard-banner-logo-title "dogemacs")
   ;; Set the banner
   (setq dashboard-startup-banner "/Users/jeldo/.emacs.d/shino.png")
   ;; Value can be
@@ -517,10 +564,180 @@ relies on =org-tempo= as of =Org v9.2=
    'org-babel-load-languages
    '((python . t)))
 #+end_src
+** COMMENT [[https://so.nwalsh.com/2020/01/05-latex][Prettier LaTeX export]]
+
+First, because I’m using UTF-8, switch the processor and configure the process command:
+
+#+begin_src emacs-lisp
+  (setq org-latex-compiler "xelatex")
+  (setq org-latex-pdf-process
+        (list (concat "latexmk -"
+                      org-latex-compiler 
+                      " -recorder -synctex=1 -bibtex-cond %b")))
+#+end_src
+
+Then, configure Org to use lstlisting for source environments:
+
+#+begin_src emacs-lisp
+  (setq org-latex-listings t)
+#+end_src
+
+Next, update org-latex-default-packages-alist to remove inputenc and fontenc because fontspec in my premable takes care of those things:
+
+#+begin_src emacs-lisp
+  (setq org-latex-default-packages-alist
+        '(("" "graphicx" t)
+          ("" "grffile" t)
+          ("" "longtable" nil)
+          ("" "wrapfig" nil)
+          ("" "rotating" nil)
+          ("normalem" "ulem" t)
+          ("" "amsmath" t)
+          ("" "textcomp" t)
+          ("" "amssymb" t)
+          ("" "capt-of" nil)
+          ("" "hyperref" nil)))
+#+end_src
+
+The documentation for org-latex-default-packages-alist suggests that it shouldn't be changed because it's used for more than one backend. How it's used for non-LaTeX backends, I don't know. I may need to revisit this approach if I encounter problems elsewhere; so far, I haven’t.
+
+Finally, update org-latex-classes to include the big wodge of preamble that I want:
+
+#+begin_src emacs-lisp
+  (setq org-latex-classes
+  '(("article"
+  "\\RequirePackage{fix-cm}
+  \\PassOptionsToPackage{svgnames}{xcolor}
+  \\documentclass[11pt]{article}
+  \\usepackage{fontspec}
+  \\setmainfont{ETBembo RomanOSF}
+  \\setsansfont[Scale=MatchLowercase]{Raleway}
+  \\setmonofont[Scale=MatchLowercase]{Operator Mono SSm}
+  \\usepackage{sectsty}
+  \\allsectionsfont{\\sffamily}
+  \\usepackage{enumitem}
+  \\setlist[description]{style=unboxed,font=\\sffamily\\bfseries}
+  \\usepackage{listings}
+  \\lstset{frame=single,aboveskip=1em,
+          framesep=.5em,backgroundcolor=\\color{AliceBlue},
+          rulecolor=\\color{LightSteelBlue},framerule=1pt}
+  \\usepackage{xcolor}
+  \\newcommand\\basicdefault[1]{\\scriptsize\\color{Black}\\ttfamily#1}
+  \\lstset{basicstyle=\\basicdefault{\\spaceskip1em}}
+  \\lstset{literate=
+              {§}{{\\S}}1
+              {©}{{\\raisebox{.125ex}{\\copyright}\\enspace}}1
+              {«}{{\\guillemotleft}}1
+              {»}{{\\guillemotright}}1
+              {Á}{{\\'A}}1
+              {Ä}{{\\\"A}}1
+              {É}{{\\'E}}1
+              {Í}{{\\'I}}1
+              {Ó}{{\\'O}}1
+              {Ö}{{\\\"O}}1
+              {Ú}{{\\'U}}1
+              {Ü}{{\\\"U}}1
+              {ß}{{\\ss}}2
+              {à}{{\\`a}}1
+              {á}{{\\'a}}1
+              {ä}{{\\\"a}}1
+              {é}{{\\'e}}1
+              {í}{{\\'i}}1
+              {ó}{{\\'o}}1
+              {ö}{{\\\"o}}1
+              {ú}{{\\'u}}1
+              {ü}{{\\\"u}}1
+              {¹}{{\\textsuperscript1}}1
+              {²}{{\\textsuperscript2}}1
+              {³}{{\\textsuperscript3}}1
+              {ı}{{\\i}}1
+              {—}{{---}}1
+              {’}{{'}}1
+              {…}{{\\dots}}1
+              {⮠}{{$\\hookleftarrow$}}1
+              {␣}{{\\textvisiblespace}}1,
+              keywordstyle=\\color{DarkGreen}\\bfseries,
+              identifierstyle=\\color{DarkRed},
+              commentstyle=\\color{Gray}\\upshape,
+              stringstyle=\\color{DarkBlue}\\upshape,
+              emphstyle=\\color{Chocolate}\\upshape,
+              showstringspaces=false,
+              columns=fullflexible,
+              keepspaces=true}
+  \\usepackage[a4paper,margin=1in,left=1.5in]{geometry}
+  \\usepackage{parskip}
+  \\makeatletter
+  \\renewcommand{\\maketitle}{%
+    \\begingroup\\parindent0pt
+    \\sffamily
+    \\Huge{\\bfseries\\@title}\\par\\bigskip
+    \\LARGE{\\bfseries\\@author}\\par\\medskip
+    \\normalsize\\@date\\par\\bigskip
+    \\endgroup\\@afterindentfalse\\@afterheading}
+  \\makeatother
+  [DEFAULT-PACKAGES]
+  \\hypersetup{linkcolor=Blue,urlcolor=DarkBlue,
+    citecolor=DarkRed,colorlinks=true}
+  \\AtBeginDocument{\\renewcommand{\\UrlFont}{\\ttfamily}}
+  [PACKAGES]
+  [EXTRA]"
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+  ("\\paragraph{%s}" . "\\paragraph*{%s}")
+  ("\\subparagraph{%s}" . "\\subparagraph*{%s}"))
+
+  ("report" "\\documentclass[11pt]{report}"
+  ("\\part{%s}" . "\\part*{%s}")
+  ("\\chapter{%s}" . "\\chapter*{%s}")
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))
+
+  ("book" "\\documentclass[11pt]{book}"
+  ("\\part{%s}" . "\\part*{%s}")
+  ("\\chapter{%s}" . "\\chapter*{%s}")
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}"))))
+#+end_src
+** [[https://github.com/gpoore/minted][Use minted for code blocks LaTeX export]]
+
+[[https://emacs.stackexchange.com/questions/33010/how-to-word-wrap-within-code-blocks][See also here ...]] [[https://emacs.stackexchange.com/questions/27982/export-code-blocks-in-org-mode-with-minted-environment][and here ...]]
+
+#+begin_src emacs-lisp
+  (setq org-latex-compiler "xelatex")
+  (setq org-latex-pdf-process
+        (list (concat "latexmk -"
+                      org-latex-compiler 
+                      " -recorder -synctex=1 -bibtex-cond %b")))
+
+  (setq org-latex-listings 'minted
+        org-latex-packages-alist '(("" "minted"))
+        org-latex-pdf-process
+        '("xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+          "xelatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+
+  (setq org-latex-minted-options '(("breaklines" "true")
+                                   ("breakanywhere" "true")))
+#+end_src
+** [[https://github.com/dakrone/ox-tufte][ox-tufte]]
+#+begin_src emacs-lisp
+  (package-install 'ox-tufte)
+  (require 'ox-tufte)
+#+end_src
+** [[https://discourse.devontechnologies.com/t/clickable-dt-links-in-orgmode/11250][Clickable DT Links in Org Mode]]
+#+begin_src emacs-lisp
+  ;; DevonThink Links
+  (org-add-link-type "x-devonthink-item" 'org-devonthink-item-open)
+  (defun org-devonthink-item-open (uid)
+  "Open the given uid, which is a reference to an item in Devonthink"
+  (shell-command (concat "open \"x-devonthink-item:" uid "\"")))
+#+end_src
 * terminal
 ** Default shell
 #+BEGIN_SRC emacs-lisp
-  (defvar my-term-shell "/usr/zsh")
+  (defvar my-term-shell "/bin/zsh")
   (defadvice ansi-term (before force-bash)
     (interactive (list my-term-shell)))
   (ad-activate 'ansi-term)
